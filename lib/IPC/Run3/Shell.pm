@@ -17,7 +17,7 @@ use strict;
 # Try the command "perldoc perlartistic" or see
 # http://perldoc.perl.org/perlartistic.html .
 
-our $VERSION = '0.50';
+our $VERSION = '0.51';
 
 use Carp;
 use warnings::register;
@@ -123,15 +123,15 @@ sub make_cmd {  ## no critic (ProhibitExcessComplexity)
 		# this is for the tests that test the option inheritance mechanism
 		if (exists $opt{__TEST_OPT_A} || exists $opt{__TEST_OPT_B}) {
 			return join ',', (
-				exists $opt{__TEST_OPT_A} ? 'A='.($opt{__TEST_OPT_A}//'undef') : (),
-				exists $opt{__TEST_OPT_B} ? 'B='.($opt{__TEST_OPT_B}//'undef') : () );
+				exists $opt{__TEST_OPT_A} ? 'A='.(defined $opt{__TEST_OPT_A} ? $opt{__TEST_OPT_A} : 'undef') : (),
+				exists $opt{__TEST_OPT_B} ? 'B='.(defined $opt{__TEST_OPT_B} ? $opt{__TEST_OPT_B} : 'undef') : () );
 		}
 		# check options for validity
 		for (keys %opt) {
 			warnings::warnif(__PACKAGE__.": unknown option \"$_\"")
 				unless $KNOWN_OPTS{$_};
 		}
-		my $allow_exit = $opt{allow_exit}//[0];
+		my $allow_exit = defined $opt{allow_exit} ? $opt{allow_exit} : [0];
 		if ($allow_exit ne 'ANY') {
 			$allow_exit = [$allow_exit] unless ref $allow_exit eq 'ARRAY';
 			warnings::warnif(__PACKAGE__.": allow_exit is empty") unless @$allow_exit;
@@ -149,6 +149,7 @@ sub make_cmd {  ## no critic (ProhibitExcessComplexity)
 		croak __PACKAGE__.": empty command" unless @fcmd;
 		warnings::warnif(__PACKAGE__.": command/argument list contains undefined values and/or references/objects")
 			if grep { !defined || ref } @fcmd;
+		@fcmd = map { defined() ? $_ : '' } @fcmd;
 		
 		# ### STDOUT Redirection
 		# wantarray: the context of the function call

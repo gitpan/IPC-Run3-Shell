@@ -27,7 +27,7 @@
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : "0"
+            "ExtUtils::MakeMaker" : "6.64"
          }
       },
       "runtime" : {
@@ -36,6 +36,7 @@
             "Data::Dumper" : "0",
             "IPC::Run3" : "0",
             "Scalar::Util" : "0",
+            "perl" : "5.006000",
             "warnings::register" : "0"
          }
       },
@@ -64,5 +65,5 @@
          "web" : "https://github.com/haukex/IPC-Run3-Shell"
       }
    },
-   "version" : "0.50"
+   "version" : "0.51"
 }

@@ -18,7 +18,7 @@ use FindBin ();
 use lib $FindBin::Bin;
 use IPC_Run3_Shell_Testlib;
 
-# This is just a really simple sanity test to see if commands other than "perl" work.
+# ### PLEASE SEE NOTE IN 40_os_nix.t ###
 
 use Test::More ($^O eq 'darwin') ? (tests=>3)
 	: (skip_all=>"these tests run on darwin, this is $^O");
@@ -28,11 +28,11 @@ use warnings FATAL=>'IPC::Run3::Shell';
 
 my $s = IPC::Run3::Shell->new;
 
-my $d = $s->defaults('read','com.apple.Safari');
+my $d = $s->defaults('read','NSGlobalDomain');
 is $?, 0, 'defaults ran ok';
-like $d, qr/\bHomePage\b/, 'found HomePage key';
+like $d, qr/\bAppleLocale\b/, 'found AppleLocale key';
 
-my @ps = grep {/Dock/} $s->ps(-ax);
+my @ps = grep { /\b(?:Dock|KernelEventAgent|SystemStarter)\b/ } $s->ps(-ax);
 is $?, 0, 'ps ran ok';
-note "Dock: @ps";
+note "selected system processes: @ps";
 

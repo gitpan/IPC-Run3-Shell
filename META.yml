@@ -13,7 +13,7 @@ build_requires:
   Test::More: '0'
   base: '0'
 configure_requires:
-  ExtUtils::MakeMaker: '0'
+  ExtUtils::MakeMaker: '6.64'
 dynamic_config: 1
 generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.140640'
 license: perl
@@ -30,9 +30,10 @@ requires:
   Data::Dumper: '0'
   IPC::Run3: '0'
   Scalar::Util: '0'
+  perl: '5.006000'
   warnings::register: '0'
 resources:
   bugtracker: https://github.com/haukex/IPC-Run3-Shell/issues
   homepage: https://github.com/haukex/IPC-Run3-Shell
   repository: https://github.com/haukex/IPC-Run3-Shell.git
-version: '0.50'
+version: '0.51'
