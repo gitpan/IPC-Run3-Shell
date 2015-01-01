@@ -61,9 +61,8 @@ like exception {
 # failure tests
 like exception { $s->perl('-e','exit 1'); 1 },
 	qr/exit (status|value) 1\b/, "fail 1";
-diag "in the following test, errors referring to \"this_command_shouldnt_exist\" can be safely ignored as long as the test passes";
-like exception { $s->this_command_shouldnt_exist; 1 },
-	qr/\QCommand "this_command_shouldnt_exist" failed/, "fail 2";
+like exception { $s->ignore_this_error_it_is_intentional; 1 },
+	qr/\QCommand "ignore_this_error_it_is_intentional" failed/, "fail 2";
 like exception { $s->perl('-e','exit 123'); 1 },
 	qr/exit (status|value) 123\b/, "fail 3";
 like exception { is $s->perl({_BAD_OPT=>1},'-e','print "foo"'), "foo", "unknown opt 1A" },
@@ -73,19 +72,27 @@ like exception { is $s->perl({_BAD_OPT=>1},'-e','print "foo"'), "foo", "unknown 
 like exception { $s->perl('-e','kill 9, $$'); 1 },
 	( $^O eq 'MSWin32' ? qr/exit status 9\b/ : qr/signal 9, without coredump|\Qsignal "KILL" (9)\E/ ), "fail 4";
 
-{ # warning tests
-	use warnings FATAL=>'all', NONFATAL=>'IPC::Run3::Shell';
+is warns { # warning tests
+	# make warnings nonfatal in a way compatible with Perl v5.6, which didn't yet have "NONFATAL"
+	no warnings FATAL=>'all'; use warnings;  ## no critic (ProhibitNoWarnings)
+	# the following is a workaround for Perl v5.6 not yet having the NONFATAL keyword;
+	# note we check below that this block does not produce any extra warnings even in v5.6
+	use warnings ($]<=5.008) ? (FATAL=>'uninitialized') : (FATAL=>'all', NONFATAL=>'IPC::Run3::Shell');
 	ok exception { my $x = 0 + undef; }, 'double-check warning fatality 1';
 	my @w1 = warns {
 			is $s->perl('-e','print "foo"; exit 1'), "foo", "warning test 1A"; is $?, 1<<8, "warning test 1B";
-			ok !$s->this_command_shouldnt_exist(), "warning test 2A"; is $?, $^O eq 'MSWin32' ? 0xFF00 : -1, "warning test 2B";
+			ok !$s->ignore_this_error_it_is_intentional(), "warning test 2A"; is $?, $^O eq 'MSWin32' ? 0xFF00 : -1, "warning test 2B";
 			is $s->perl({stdout=>\my $x},'-e','print "foo"; exit 123'), 123, "warning test 3A"; is $?, 123<<8, "warning test 3B";
 			is $x, "foo", "warning test 3C";
 			is $s->perl('-e','kill 9, $$'), '', "warning test 4A"; is $?, $^O eq 'MSWin32' ? 9<<8 : 9, "warning test 4B";
 		};
+	# on some Windows systems, there is an extra warning like the following
+	# (seen on some CPAN Testers results for v0.51)
+	if ($^O eq 'MSWin32' && @w1==5) # this workaround is slightly hackish
+		{ like splice(@w1,1,1), qr/\QCan't spawn "cmd.exe"/, "extra Windows warning" }
 	is @w1, 4, "warning test count";
 	like $w1[0], qr/exit (status|value) 1\b/, "warning test 1C";
-	like $w1[1], qr/\QCommand "this_command_shouldnt_exist" failed/, "warning test 2C";
+	like $w1[1], qr/\QCommand "ignore_this_error_it_is_intentional" failed/, "warning test 2C";
 	like $w1[2], qr/exit (status|value) 123\b/, "warning test 3D";
 	like $w1[3], ( $^O eq 'MSWin32' ? qr/exit status 9\b/ : qr/signal 9, without coredump|\Qsignal "KILL" (9)\E/ ), "warning test 4C";
 	# make sure fail_on_stderr is still fatal
@@ -103,16 +110,16 @@ like exception { $s->perl('-e','kill 9, $$'); 1 },
 	like $w3[1], qr/undefined values?/, "undef/ref warn 1D";
 	like $w3[2], qr/contains?.+references/, "undef/ref warn 1E";
 	like $w3[3], qr/\Qunknown option "_BAD_OPT"/, "unknown opt 2B";
-}
+}, 0, "no unexpected warns";
 
 { # disable warnings
 	use warnings FATAL=>'all';
 	no warnings 'IPC::Run3::Shell';  ## no critic (ProhibitNoWarnings)
 	ok exception { my $x = 0 + undef; }, 'double-check warning fatality 2';
-	is warns {
+	my @w4 = warns {
 			# note these are just copied from the "warnings tests" above
 			is $s->perl('-e','print "foo"; exit 1'), "foo", "no warn 1A"; is $?, 1<<8, "no warn 1B";
-			ok !$s->this_command_shouldnt_exist(), "no warn 2A"; is $?, $^O eq 'MSWin32' ? 0xFF00 : -1, "no warn 2B";
+			ok !$s->ignore_this_error_it_is_intentional(), "no warn 2A"; is $?, $^O eq 'MSWin32' ? 0xFF00 : -1, "no warn 2B";
 			is $s->perl({stdout=>\my $x},'-e','print "foo"; exit 123'), 123, "no warn 3A"; is $?, 123<<8, "no warn 3B";
 			is $x, "foo", "no warn 3C";
 			is $s->perl('-e','kill 9, $$'), '', "no warn 4A"; is $?, $^O eq 'MSWin32' ? 9<<8 : 9, "no warn 4B";
@@ -121,7 +128,10 @@ like exception { $s->perl('-e','kill 9, $$'); 1 },
 			is $s->perl('-e','print ">>@ARGV<<"','--','x',undef,0,undef,'y'), ">>x  0  y<<", "no warn 6";
 			like $s->perl('-e','print ">>@ARGV<<"','--','x',[1,2],'y'), qr/^>>x ARRAY\(0x[0-9a-fA-F]+\) y<<$/, "no warn 7";
 			is $s->perl({_BAD_OPT=>1},'-e','print "foo"'), "foo", "unknown opt 3";
-		}, 0, "no warnings";
+		};
+	if ($^O eq 'MSWin32' && @w4==1) # same workaround as above
+		{ like shift(@w4), qr/\QCan't spawn "cmd.exe"/, "extra Windows warning" }
+	is @w4, 0, "no warnings";
 	# make sure fail_on_stderr is still fatal
 	like exception { $s->perl({fail_on_stderr=>1},'-e','print STDERR "bang"') },
 		qr/\Qwrote to STDERR: "bang"/, "fail_on_stderr without warnings";

@@ -10,10 +10,12 @@ t/11_oo.t
 t/12_capture.t
 t/13_warn_fail.t
 t/14_abspath.t
+t/15_import_into.t
 t/20_opt_allow_exit.t
 t/21_opt_chomp.t
 t/22_opt_irs.t
 t/23_opt_show_cmd.t
+t/24_opt_both.t
 t/29_opt_inherit.t
 t/30_run3.t
 t/40_os_nix.t
@@ -22,6 +24,7 @@ t/42_os_win32.t
 t/90_author_critic.t
 t/91_author_pod.t
 t/92_author_cover.t
+t/93_author_ipc_run3.t
 t/IPC_Run3_Shell_Testlib.pm
 t/perlcriticrc
 t/Test_Pod_Verbatim_Parser.pm

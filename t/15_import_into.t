@@ -20,17 +20,19 @@ use IPC_Run3_Shell_Testlib;
 
 use Test::More tests => 3;
 
-# Note: The CPAN Testers wiki recommends to use $Config{perlpath} instead of $^X.
-use Config;
-
-use File::Spec::Functions 'file_name_is_absolute';
-# if the following check fails, the tests following it are inconclusive
-ok file_name_is_absolute($Config{perlpath}), "perl path is absolute ($Config{perlpath})";
-
-use IPC::Run3::Shell ':run', [ pl => $Config{perlpath}, '-e' ];
+use IPC::Run3::Shell;
 use warnings FATAL=>'IPC::Run3::Shell';
 
-is pl("print 'baz'"), 'baz', 'alias with full pathname';
+IPC::Run3::Shell->import_into('Foo::Bar','perl',[ foo => 'perl', '-e', 'print "foo @ARGV"' ],':run');
 
-is run($Config{perlpath},'-e','print "quz"'), 'quz', 'run with full pathname';
+{
+	package Foo::Bar;
+	use warnings;
+	use strict;
+	use warnings FATAL=>'IPC::Run3::Shell';
+	use Test::More import=>['is'];
+	is perl('-e','print "x @ARGV y"','a >b'), 'x a >b y', 'import_into 1';
+	is foo('bar'), 'foo bar', 'import_into 2';
+	is run('perl','-e','print "foo\tbar\n"'), "foo\tbar\n", 'import_into 3';
+}
 

@@ -1,9 +1,10 @@
 ---
-abstract: 'Perl extension for easy execution of system commands'
+abstract: 'Perl extension for calling system commands as if they were Perl functions'
 author:
   - 'Hauke D <haukex@zero-g.net>'
 build_requires:
   Capture::Tiny: '0'
+  Config: '0'
   Exporter: '0'
   ExtUtils::MakeMaker: '0'
   File::Spec::Functions: '0'
@@ -36,4 +37,4 @@ resources:
   bugtracker: https://github.com/haukex/IPC-Run3-Shell/issues
   homepage: https://github.com/haukex/IPC-Run3-Shell
   repository: https://github.com/haukex/IPC-Run3-Shell.git
-version: '0.51'
+version: '0.52'
